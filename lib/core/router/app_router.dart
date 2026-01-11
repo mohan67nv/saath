@@ -56,8 +56,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.otp,
         name: 'otp',
         builder: (context, state) {
-          final phone = state.extra as String? ?? '';
-          return OtpScreen(phoneNumber: phone);
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return OtpScreen(extra: extra);
         },
       ),
       GoRoute(
@@ -105,6 +105,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => const NoTransitionPage(
               child: ProfileScreen(),
             ),
+          ),
+          GoRoute(
+            path: AppRoutes.otherProfile,
+            name: 'other-profile',
+            pageBuilder: (context, state) {
+              final userId = state.pathParameters['id'];
+              return NoTransitionPage(
+                child: ProfileScreen(userId: userId),
+              );
+            },
           ),
         ],
       ),

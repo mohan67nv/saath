@@ -45,7 +45,7 @@ class SecurityBadge extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'End-to-End Encrypted',
+                      'Secure & Private',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: AppColors.success,
                         fontWeight: FontWeight.w600,
@@ -61,7 +61,7 @@ class SecurityBadge extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Your data is encrypted and secure',
+                  'Messages encrypted in transit & at rest',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -331,9 +331,9 @@ void showSecurityInfoDialog(BuildContext context) {
             subtitle: 'Secure data in transit',
           ),
           _SecurityItem(
-            icon: Icons.fingerprint,
-            title: 'Zero-Knowledge',
-            subtitle: 'We cannot read your private messages',
+            icon: Icons.sync_lock,
+            title: 'Encrypted in Transit',
+            subtitle: 'TLS 1.3 protects data over network',
           ),
           _SecurityItem(
             icon: Icons.gpp_good,

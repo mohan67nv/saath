@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/sms_otp_service.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 /// Welcome Screen - Entry point for new users
@@ -18,6 +18,7 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final SmsOtpService _smsService = SmsOtpService();
   bool _isLoading = false;
 
   @override
@@ -26,15 +27,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     super.dispose();
   }
 
-  void _onContinue() {
+  Future<void> _onContinue() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       
-      // Navigate to OTP screen
-      final phone = '+91${_phoneController.text.trim()}';
-      context.push(AppRoutes.otp, extra: phone);
-      
-      setState(() => _isLoading = false);
+      try {
+        final phone = '+91${_phoneController.text.trim()}';
+        
+        // Send OTP using 2Factor
+        final result = await _smsService.sendOTP(phone);
+        
+        if (result['success']) {
+          if (mounted) {
+            // Navigate to OTP screen with sessionId
+            context.push(
+              AppRoutes.otp,
+              extra: {'phone': phone, 'sessionId': result['sessionId']},
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(result['message'] ?? 'Failed to send OTP')),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -95,6 +121,58 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   .fadeIn(delay: 500.ms, duration: 600.ms)
                   .slideY(begin: 0.2, end: 0),
                 
+                const SizedBox(height: AppSpacing.md),
+                
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: Text(
+                        'Or continue with',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ).animate().fadeIn(delay: 550.ms),
+                
+                const SizedBox(height: AppSpacing.md),
+                
+                // Social Login Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.g_mobiledata,
+                        label: 'Google',
+                        onTap: () {
+                          // TODO: Implement Google login
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Google login coming soon!')),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: _buildSocialButton(
+                        icon: Icons.facebook,
+                        label: 'Facebook',
+                        onTap: () {
+                          // TODO: Implement Facebook login
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Facebook login coming soon!')),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 600.ms),
+                
                 const SizedBox(height: AppSpacing.xl),
                 
                 // Features
@@ -120,11 +198,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Column(
       children: [
         // App Logo - Display directly without background
-        Image.asset(
-          'assets/images/logo.png',
-          width: 100,
-          height: 100,
-          fit: BoxFit.contain,
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/logo.png',
+            width: 120,
+            height: 120,
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         
@@ -257,6 +338,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlRadius),
+        backgroundColor: Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: AppColors.textPrimary),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

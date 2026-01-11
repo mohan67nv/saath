@@ -71,11 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           children: [
             // Logo Image - Direct display without background
-            Image.asset(
-              'assets/images/logo.png',
-              width: 44,
-              height: 44,
-              fit: BoxFit.contain,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             // App Name & Tagline

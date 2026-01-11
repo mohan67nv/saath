@@ -475,7 +475,7 @@ class _MemberGridCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       _MiniActionButton(
                         icon: Icons.person,
-                        onTap: () => context.push(AppRoutes.members),
+                        onTap: () => context.push('/user/${Uri.encodeComponent(name)}'),
                       ),
                     ],
                   ),
@@ -663,7 +663,7 @@ class _MemberListCard extends StatelessWidget {
               const SizedBox(width: 8),
               _ActionButton(
                 icon: Icons.person_add,
-                onTap: () => context.push(AppRoutes.members),
+                onTap: () => context.push('/user/${Uri.encodeComponent(name)}'),
               ),
             ],
           ),

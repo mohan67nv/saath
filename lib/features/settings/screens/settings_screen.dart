@@ -6,6 +6,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../shared/widgets/security_widgets.dart';
+import '../../safety/screens/emergency_contacts_screen.dart';
+import '../../safety/screens/blocked_users_screen.dart';
 
 /// Settings Screen
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -80,7 +82,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _buildSettingTile(
                 icon: Icons.person_off,
                 title: 'Blocked Users',
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BlockedUsersScreen(),
+                  ),
+                ),
               ),
             ]),
             const SizedBox(height: AppSpacing.lg),
@@ -103,8 +110,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _buildSettingTile(
                 icon: Icons.shield,
                 title: 'Emergency Contacts',
-                subtitle: 'Mom (+91-9876543210)',
-                onTap: () {},
+                subtitle: 'Add trusted contacts',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EmergencyContactsScreen(),
+                  ),
+                ),
               ),
               _buildSettingTile(
                 icon: Icons.warning,

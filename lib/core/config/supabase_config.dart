@@ -85,6 +85,9 @@ extension SupabaseExtensions on SupabaseClient {
   
   /// User reports table reference
   SupabaseQueryBuilder get userReports => from('user_reports');
+
+  /// Emergency contacts table reference
+  SupabaseQueryBuilder get emergencyContacts => from('emergency_contacts');
   
   /// User blocks table reference
   SupabaseQueryBuilder get userBlocks => from('user_blocks');

@@ -3,14 +3,35 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
+import '../../safety/widgets/report_user_dialog.dart';
+import '../../safety/services/moderation_service.dart';
 
 /// Profile Screen with Stats and Ratings
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final String? userId;
+  
+  const ProfileScreen({
+    super.key,
+    this.userId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final profile = {
+    final isCurrentUser = userId == null;
+    
+    final profile = userId != null ? {
+      'name': 'Priya Sharma',
+      'age': 26,
+      'city': 'Bangalore',
+      'bio': 'Love traveling and photography! 📸\nAlways up for a coffee chat.',
+      'verified': true,
+      'eventsAttended': 5,
+      'connections': 18,
+      'rating': 4.5,
+      'totalRatings': 12,
+      'interests': ['Photography', 'Travel', 'Coffee', 'Art'],
+      'tags': ['Friendly', 'Creative'],
+    } : {
       'name': 'Aditya Kumar',
       'age': 26,
       'city': 'Bangalore',
@@ -34,10 +55,95 @@ class ProfileScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: AppColors.primary,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
-                onPressed: () => context.push(AppRoutes.settings),
-              ),
+              if (isCurrentUser)
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.white),
+                  onPressed: () => context.push(AppRoutes.settings),
+                )
+              else
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  onSelected: (value) async {
+                    if (value == 'report') {
+                      await showDialog(
+                        context: context,
+                        builder: (context) => ReportUserDialog(
+                          reportedUserId: userId!,
+                          reportingUserId: 'user_123', // TODO: Get from auth
+                          reportedUserName: profile['name'] as String,
+                        ),
+                      );
+                    } else if (value == 'block') {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Block User'),
+                          content: Text('Block ${profile['name']}? They won\'t be able to see your profile or contact you.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+                              child: const Text('Block'),
+                            ),
+                          ],
+                        ),
+                      );
+                      
+                      if (confirmed == true && context.mounted) {
+                        try {
+                          await ModerationService().blockUser(
+                            userId: 'user_123', // TODO: Get from auth
+                            blockedUserId: userId!,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('User blocked successfully'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                            context.pop(); // Go back after blocking
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to block user: $e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(Icons.flag, color: AppColors.error),
+                          SizedBox(width: 12),
+                          Text('Report User'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'block',
+                      child: Row(
+                        children: [
+                          Icon(Icons.block, color: AppColors.error),
+                          SizedBox(width: 12),
+                          Text('Block User'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -136,21 +242,50 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   
-                  // Edit Profile Button
-                  Center(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push(AppRoutes.editProfile),
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Edit Profile'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.sm,
+                  // Edit Profile Button (Only for current user)
+                  if (isCurrentUser) ...[
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(AppRoutes.editProfile),
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text('Edit Profile'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: AppSpacing.lg),
+                  ] else ...[
+                     // Connect Actions for other users
+                     Row(
+                       mainAxisAlignment: MainAxisAlignment.center,
+                       children: [
+                         ElevatedButton.icon(
+                           onPressed: () {},
+                           icon: const Icon(Icons.person_add, size: 16),
+                           label: const Text('Connect'),
+                           style: ElevatedButton.styleFrom(
+                             backgroundColor: AppColors.primary,
+                             foregroundColor: Colors.white,
+                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                           ),
+                         ),
+                         const SizedBox(width: 12),
+                         OutlinedButton.icon(
+                           onPressed: () => context.push('/chat/dm-${profile['name']}'),
+                           icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                           label: const Text('Message'),
+                           style: OutlinedButton.styleFrom(
+                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                           ),
+                         ),
+                       ],
+                     ),
+                     const SizedBox(height: AppSpacing.lg),
+                  ],
                   
                   // Stats
                   _buildStatsRow(context, profile),

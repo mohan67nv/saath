@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/services/sms_otp_service.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 /// OTP Verification Screen
 class OtpScreen extends StatefulWidget {
-  final String phoneNumber;
+  final Map<String, dynamic> extra;
   
-  const OtpScreen({super.key, required this.phoneNumber});
+  const OtpScreen({super.key, required this.extra});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -25,7 +25,10 @@ class _OtpScreenState extends State<OtpScreen> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final SmsOtpService _smsService = SmsOtpService();
   
+  late String _phoneNumber;
+  late String _sessionId;
   bool _isLoading = false;
   int _resendTimer = 30;
   Timer? _timer;
@@ -33,6 +36,8 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void initState() {
     super.initState();
+    _phoneNumber = widget.extra['phone'] as String;
+    _sessionId = widget.extra['sessionId'] as String;
     _startResendTimer();
   }
 
@@ -85,24 +90,65 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _verifyOtp(String otp) async {
     setState(() => _isLoading = true);
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // For demo, accept any 6-digit OTP
-    if (mounted) {
-      context.go(AppRoutes.profileSetup);
+    try {
+      // Verify OTP using 2Factor
+      final result = await _smsService.verifyOTP(_sessionId, otp);
+      
+      if (result['success']) {
+        if (mounted) {
+          // TODO: Create user session in Supabase
+          context.go(AppRoutes.profileSetup);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Invalid OTP'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    
-    setState(() => _isLoading = false);
   }
 
-  void _resendOtp() {
+  Future<void> _resendOtp() async {
     if (_resendTimer == 0) {
-      _startResendTimer();
-      // TODO: Implement actual OTP resend
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP sent successfully!')),
-      );
+      // Resend OTP using 2Factor
+      final result = await _smsService.sendOTP(_phoneNumber);
+      
+      if (result['success']) {
+        setState(() => _sessionId = result['sessionId']);
+        _startResendTimer();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('OTP sent successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to resend OTP'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -206,7 +252,7 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          widget.phoneNumber,
+          _phoneNumber,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.primary,
