@@ -481,19 +481,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: AppSpacing.sm),
         _EventListTile(
-          title: 'Chai & Code',
-          subtitle: 'Tomorrow, 6 PM • HSR Layout',
+          title: 'Sunday Morning Chai',
+          subtitle: 'Today, 10 AM • Cubbon Park',
           emoji: '☕',
-          participants: '5/8',
-          onTap: () => context.push('/event/2'),
+          participants: '6/8',
+          onTap: () => context.push('/event/1'),
         ),
         const SizedBox(height: AppSpacing.sm),
         _EventListTile(
-          title: 'Weekend Trek',
+          title: 'Weekend Trek to Nandi Hills',
           subtitle: 'Sat, 6 AM • Nandi Hills',
           emoji: '🥾',
-          participants: '8/10',
-          onTap: () => context.push('/event/3'),
+          participants: '8/12',
+          onTap: () => context.push('/event/2'),
         ),
       ],
     );
@@ -563,6 +563,22 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Close button
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 18, color: Colors.black54),
+                ),
+              ),
+            ),
             Container(
               width: 80,
               height: 80,

@@ -17,7 +17,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isGridView = false;
   String _selectedCategory = 'All';
   int _currentIndex = 0;
-  final Set<String> _joinedEventIds = {};
+  final Set<String> _joinedEventIds = {'1', '2'}; // Pre-joined for demo - matches Home upcoming
   bool _showJoinedOnly = false; // New filter for joined events
 
   final List<String> _categories = [
@@ -754,86 +754,85 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Participant Photo Grid
-            Expanded(
-              flex: 5,
+            // Participant Photo Grid - takes most space
+            AspectRatio(
+              aspectRatio: 1.1,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 child: _ParticipantGrid(count: event['participants'] as int),
               ),
             ),
             
-            // Details
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     Row(
-                      children: [
-                         Text(
-                          event['emoji'] as String,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            event['title'] as String,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      event['date'] as String,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
+            // Details - compact, no flex
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                   Row(
+                    children: [
+                       Text(
+                        event['emoji'] as String,
+                        style: const TextStyle(fontSize: 16),
                       ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          event['title'] as String,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    event['date'] as String,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.group, size: 12, color: AppColors.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${event['participants']} Going',
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.group, size: 12, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${event['participants']} Going',
+                        style: TextStyle(
+                           fontSize: 11, 
+                           fontWeight: FontWeight.w600,
+                           color: AppColors.primary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                           color: AppColors.success.withValues(alpha: 0.1),
+                           borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          (event['cost'] as int) == 0 ? 'FREE' : '₹${event['cost']}',
                           style: TextStyle(
-                             fontSize: 11, 
-                             fontWeight: FontWeight.w600,
-                             color: AppColors.primary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
                           ),
                         ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                             color: AppColors.success.withValues(alpha: 0.1),
-                             borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            (event['cost'] as int) == 0 ? 'FREE' : '₹${event['cost']}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

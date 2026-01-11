@@ -412,6 +412,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Close button
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 18, color: Colors.black54),
+                ),
+              ),
+            ),
             // Profile Header
             Container(
               width: 80,
