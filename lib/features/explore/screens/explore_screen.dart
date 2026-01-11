@@ -16,7 +16,10 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   bool _isGridView = false;
   String _selectedCategory = 'All';
-  
+  int _currentIndex = 0;
+  final Set<String> _joinedEventIds = {};
+  bool _showJoinedOnly = false; // New filter for joined events
+
   final List<String> _categories = [
     'All', 'Chai', 'Movies', 'Gaming', 'Books', 'Food', 'Sports', 'Music'
   ];
@@ -40,7 +43,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       'id': '2',
       'title': 'Weekend Trek to Nandi Hills',
       'emoji': '🥾',
-      'category': 'Movies',
+      'category': 'Movies', // Kept generic categories for now based on previous list
       'date': 'Sat, 6 AM',
       'location': 'Nandi Hills',
       'host': 'Rahul K.',
@@ -78,14 +81,59 @@ class _ExploreScreenState extends State<ExploreScreen> {
       'cost': 150,
       'description': 'This month we\'re discussing Atomic Habits. Come share your insights!',
     },
+    {
+      'id': '5',
+      'title': 'Badminton Match',
+      'emoji': '🏸',
+      'category': 'Sports',
+      'date': 'Sat, 5 PM',
+      'location': 'Play Arena, Sarjapur',
+      'host': 'Vikram J.',
+      'hostVerified': true,
+      'participants': 3,
+      'maxParticipants': 4,
+      'cost': 200,
+      'description': 'Looking for intermediate players for doubles match.',
+    },
   ];
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for query parameters using GoRouterState
+    try {
+      final state = GoRouterState.of(context);
+      final viewParam = state.uri.queryParameters['view'];
+      if (viewParam == 'grid') {
+        setState(() => _isGridView = true);
+      } else if (viewParam == 'joined') {
+        setState(() {
+          _isGridView = true;
+          _showJoinedOnly = true;
+        });
+      }
+    } catch (e) {
+      // Ignore if state not available
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final filteredEvents = _selectedCategory == 'All'
+    // Filter by category
+    var filteredEvents = _selectedCategory == 'All'
       ? _events
       : _events.where((e) => e['category'] == _selectedCategory).toList();
     
+    // Filter for joined only if enabled
+    if (_showJoinedOnly) {
+      filteredEvents = filteredEvents.where((e) => _joinedEventIds.contains(e['id'])).toList();
+    }
+    
+    // Ensure index is valid
+    if (_currentIndex >= filteredEvents.length) {
+      _currentIndex = 0;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -115,12 +163,44 @@ class _ExploreScreenState extends State<ExploreScreen> {
       child: Row(
         children: [
           Text(
-            'Explore',
+            _showJoinedOnly ? 'My Events' : 'Explore',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const Spacer(),
+          // Joined Toggle
+          GestureDetector(
+            onTap: () => setState(() => _showJoinedOnly = !_showJoinedOnly),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _showJoinedOnly ? AppColors.success : Colors.white,
+                borderRadius: AppRadius.fullRadius,
+                boxShadow: AppShadows.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: _showJoinedOnly ? Colors.white : AppColors.success,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Joined',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _showJoinedOnly ? Colors.white : AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
           // View Toggle
           Container(
             decoration: BoxDecoration(
@@ -194,6 +274,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _showJoinConfirmation(BuildContext context, Map<String, dynamic> event) {
+    // If already joined, do nothing or show already joined message
+    if (_joinedEventIds.contains(event['id'])) {
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -265,6 +350,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
+              setState(() {
+                _joinedEventIds.add(event['id']);
+                _isSlidingOut = true; // Advance to next card like X button
+              });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Row(
@@ -302,7 +391,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedCategory = category),
+              onTap: () => setState(() {
+                _selectedCategory = category;
+                _currentIndex = 0; // Reset index when category changes
+              }),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
@@ -329,118 +421,170 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  bool _isSlidingOut = false;
+
   Widget _buildCardStack(List<Map<String, dynamic>> events) {
     if (events.isEmpty) {
       return _buildEmptyState();
     }
     
+    // Cycle logic
+    final currentEvent = events[_currentIndex];
+    final nextEventIndex = (_currentIndex + 1) % events.length;
+    final nextEvent = events[nextEventIndex];
+    
+    // Don't show background card if only 1 event
+    final showBackground = events.length > 1;
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Stack(
         children: [
-          // Background cards
-          Positioned(
-            top: 20,
-            left: 20,
-            right: 20,
-            child: _buildEventCard(events[0], isBackground: true),
-          ),
-          // Main card
-          _buildEventCard(events[0])
-            .animate()
-            .fadeIn()
-            .slideY(begin: 0.1, end: 0),
+          // Background card (Next Event)
+          if (showBackground)
+            _buildBackgroundCard(nextEvent),
+          
+          // Main card (Current Event)
+          _buildForegroundCard(currentEvent),
         ],
       ),
     );
   }
 
+  Widget _buildBackgroundCard(Map<String, dynamic> event) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Center(
+        child: Transform.translate(
+          offset: const Offset(0, 20), // Start slightly down
+          child: _buildEventCard(event, isBackground: true)
+            .animate(
+              target: _isSlidingOut ? 1 : 0,
+            )
+            .scaleXY(
+              begin: 0.92, // Deep in background
+              end: 1.0, // Comes to front
+              duration: 200.ms,
+              curve: Curves.easeOut,
+            )
+            .moveY(
+              begin: 0,
+              end: -20, // Move up to align with foreground
+              duration: 200.ms,
+              curve: Curves.easeOut,
+            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForegroundCard(Map<String, dynamic> event) {
+    // Only animate exit when _isSlidingOut is true
+    if (_isSlidingOut) {
+      return _buildEventCard(event)
+        .animate(
+          onComplete: (controller) {
+            setState(() {
+              _currentIndex = (_currentIndex + 1) % _events.length;
+              _isSlidingOut = false;
+            });
+          },
+        )
+        .slideX(
+          begin: 0,
+          end: -1.5,
+          duration: 300.ms,
+          curve: Curves.easeIn,
+        )
+        .rotate(
+          begin: 0,
+          end: -0.15,
+          duration: 300.ms,
+          curve: Curves.easeIn,
+        );
+    }
+    
+    // Normal state - just show the card with a subtle entrance
+    return _buildEventCard(event)
+      .animate(key: ValueKey(event['id']))
+      .fadeIn(duration: 200.ms);
+  }
+
   Widget _buildEventCard(Map<String, dynamic> event, {bool isBackground = false}) {
+    final isJoined = _joinedEventIds.contains(event['id']);
+
     return GestureDetector(
       onTap: isBackground ? null : () => context.push('/event/${event['id']}'),
       child: Container(
-        height: 480,
+        height: 520, // Increased height for better aspect ratio
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: AppRadius.xlRadius,
-          boxShadow: isBackground ? AppShadows.md : AppShadows.lg,
+          boxShadow: isBackground 
+              ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] 
+              : AppShadows.lg,
         ),
         child: isBackground
-          ? null
+          ? Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: AppRadius.xlRadius,
+              ),
+              child: Center(
+                 child: Text(
+                   event['emoji'] as String, 
+                   style: TextStyle(fontSize: 80, color: AppColors.textLight.withValues(alpha: 0.2)),
+                 ),
+              ),
+            ) 
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Image placeholder
                 Container(
-                  height: 200,
+                  height: 220,
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(24),
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Text(
-                          event['emoji'] as String,
-                          style: const TextStyle(fontSize: 80),
-                        ),
-                      ),
-                      // Only show price if cost > 0
-                      if ((event['cost'] as int) > 0)
-                        Positioned(
-                          top: AppSpacing.md,
-                          right: AppSpacing.md,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              borderRadius: AppRadius.fullRadius,
-                            ),
-                            child: Text(
-                              '₹${event['cost']}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: Center(
+                    child: Text(
+                      event['emoji'] as String,
+                      style: const TextStyle(fontSize: 80),
+                    ),
                   ),
                 ),
                 
-                // Content
+                // Details
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           event['title'] as String,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
+                            fontSize: 22,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        
-                        // Host info
-                        Row(
+                        const SizedBox(height: 8),
+                         Row(
                           children: [
-                            const CircleAvatar(
-                              radius: 14,
+                            CircleAvatar(
+                              radius: 12,
                               backgroundColor: AppColors.primary,
-                              child: Icon(
-                                Icons.person,
-                                size: 14,
-                                color: Colors.white,
-                              ),
+                              child: const Icon(Icons.person, size: 14, color: Colors.white),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -452,46 +596,54 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                             if (event['hostVerified'] as bool) ...[
                               const SizedBox(width: 4),
-                              const Icon(
-                                Icons.verified,
-                                size: 16,
-                                color: AppColors.verified,
-                              ),
+                              const Icon(Icons.verified, size: 14, color: AppColors.verified),
                             ],
                           ],
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
                         Text(
                           event['description'] as String,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.textSecondary,
+                            height: 1.5,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const Spacer(),
-                        
-                        // Event details
                         Row(
                           children: [
-                            _EventDetail(
-                              icon: Icons.calendar_today,
-                              text: event['date'] as String,
+                            const Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              event['date'] as String,
+                              style: const TextStyle(color: AppColors.textSecondary),
                             ),
-                            const SizedBox(width: AppSpacing.md),
-                            _EventDetail(
-                              icon: Icons.location_on,
-                              text: event['location'] as String,
+                            const Spacer(),
+                            const Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              event['location'] as String,
+                              style: const TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        
-                        // Progress bar
-                        _buildParticipantsBar(
-                          event['participants'] as int,
-                          event['maxParticipants'] as int,
+                        // Participants Bar
+                        _buildParticipantsBar(event['participants'] as int, event['maxParticipants'] as int),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${event['participants']} going',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            Text(
+                              '${(event['cost'] as int) > 0 ? "₹${event['cost']}" : "Free"}',
+                              style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -503,20 +655,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     children: [
+                      // X Button - Skip to next event
                       _ActionButton(
                         icon: Icons.close,
                         color: AppColors.error,
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Event skipped'),
-                              duration: Duration(seconds: 1),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          if (!_isSlidingOut) {
+                            setState(() => _isSlidingOut = true);
+                          }
                         },
                       ),
                       const SizedBox(width: AppSpacing.md),
+                      // Save Button
                       Expanded(
                         child: _ActionButton(
                           icon: Icons.bookmark,
@@ -524,30 +674,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           color: AppColors.secondary,
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.bookmark_added, color: Colors.white),
-                                    const SizedBox(width: 8),
-                                    Text('Saved "${event['title']}" for later'),
-                                  ],
-                                ),
-                                backgroundColor: AppColors.secondary,
-                                behavior: SnackBarBehavior.floating,
-                              ),
+                               const SnackBar(content: Text("Event Saved!"), duration: Duration(seconds: 1)),
                             );
                           },
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
+                      // Join Button
                       Expanded(
                         flex: 2,
                         child: _ActionButton(
-                          icon: Icons.check,
-                          label: 'Join',
+                          icon: isJoined ? Icons.check_circle : Icons.check,
+                          label: isJoined ? 'Joined' : 'Join',
                           color: AppColors.success,
                           filled: true,
-                          onTap: () => _showJoinConfirmation(context, event),
+                          // If joined, verify logic, else show confirmation
+                          onTap: isJoined ? () {} : () => _showJoinConfirmation(context, event),
                         ),
                       ),
                     ],
@@ -564,17 +706,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(Icons.group, size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: 4),
-            Text(
-              '$current/$max joined',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
         ClipRRect(
           borderRadius: AppRadius.fullRadius,
           child: LinearProgressIndicator(
@@ -583,7 +714,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             valueColor: AlwaysStoppedAnimation(
               progress >= 1 ? AppColors.error : AppColors.success,
             ),
-            minHeight: 4,
+            minHeight: 6,
           ),
         ),
       ],
@@ -599,9 +730,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       padding: const EdgeInsets.all(AppSpacing.md),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: AppSpacing.sm,
-        mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 0.75,
+        crossAxisSpacing: AppSpacing.md,
+        mainAxisSpacing: AppSpacing.md,
+        childAspectRatio: 0.65, // Taller cards to fit grid of photos
       ),
       itemCount: events.length,
       itemBuilder: (context, index) {
@@ -619,60 +750,84 @@ class _ExploreScreenState extends State<ExploreScreen> {
           color: Colors.white,
           borderRadius: AppRadius.lgRadius,
           boxShadow: AppShadows.sm,
+          border: Border.all(color: Colors.grey.shade100),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  event['emoji'] as String,
-                  style: const TextStyle(fontSize: 40),
-                ),
+            // Participant Photo Grid
+            Expanded(
+              flex: 5,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: _ParticipantGrid(count: event['participants'] as int),
               ),
             ),
+            
+            // Details
             Expanded(
+              flex: 4,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      event['title'] as String,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                     Row(
+                      children: [
+                         Text(
+                          event['emoji'] as String,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            event['title'] as String,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                     ),
                     const SizedBox(height: 4),
                     Text(
                       event['date'] as String,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
+                        fontSize: 11,
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(
-                          Icons.group,
-                          size: 14,
-                          color: AppColors.textSecondary,
-                        ),
+                        Icon(Icons.group, size: 12, color: AppColors.primary),
                         const SizedBox(width: 4),
                         Text(
-                          '${event['participants']}/${event['maxParticipants']}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                          '${event['participants']} Going',
+                          style: TextStyle(
+                             fontSize: 11, 
+                             fontWeight: FontWeight.w600,
+                             color: AppColors.primary,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                             color: AppColors.success.withValues(alpha: 0.1),
+                             borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            (event['cost'] as int) == 0 ? 'FREE' : '₹${event['cost']}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.success,
+                            ),
                           ),
                         ),
                       ],
@@ -687,6 +842,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+
+
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -700,12 +858,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: AppSpacing.md),
           Text(
             'No events found',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Try a different category',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
@@ -731,42 +884,17 @@ class _ViewToggleButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.transparent,
-          borderRadius: AppRadius.mdRadius,
+          borderRadius: AppRadius.lgRadius,
         ),
         child: Icon(
           icon,
-          size: 18,
-          color: isSelected ? Colors.white : AppColors.textSecondary,
+          size: 20,
+          color: isSelected ? Colors.white : AppColors.textPrimary,
         ),
       ),
-    );
-  }
-}
-
-class _EventDetail extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _EventDetail({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -775,15 +903,15 @@ class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String? label;
   final Color color;
-  final bool filled;
   final VoidCallback onTap;
+  final bool filled;
 
   const _ActionButton({
     required this.icon,
     this.label,
     required this.color,
-    this.filled = false,
     required this.onTap,
+    this.filled = false,
   });
 
   @override
@@ -791,12 +919,15 @@ class _ActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: filled ? color : color.withValues(alpha: 0.1),
-          borderRadius: AppRadius.lgRadius,
+          color: filled ? color : Colors.white,
+          borderRadius: AppRadius.fullRadius,
           border: filled ? null : Border.all(color: color.withValues(alpha: 0.3)),
+          boxShadow: filled ? AppShadows.md : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -807,7 +938,7 @@ class _ActionButton extends StatelessWidget {
               color: filled ? Colors.white : color,
             ),
             if (label != null) ...[
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 label!,
                 style: TextStyle(
@@ -818,6 +949,64 @@ class _ActionButton extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ParticipantGrid extends StatelessWidget {
+  final int count;
+
+  const _ParticipantGrid({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate grid dimensions based on count
+    int cols, rows;
+    if (count <= 4) {
+      cols = 2;
+      rows = 2;
+    } else if (count <= 6) {
+      cols = 3;
+      rows = 2;
+    } else {
+      cols = 3;
+      rows = 3;
+    }
+    
+    final displayCount = (cols * rows).clamp(1, count);
+    
+    return Container(
+      color: Colors.grey[100],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cellWidth = constraints.maxWidth / cols;
+          final cellHeight = constraints.maxHeight / rows;
+          
+          return Wrap(
+            children: List.generate(displayCount, (index) {
+              final color = Colors.primaries[index % Colors.primaries.length];
+              return SizedBox(
+                width: cellWidth,
+                height: cellHeight,
+                child: Container(
+                  margin: const EdgeInsets.all(1),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.person,
+                      color: color,
+                      size: cellHeight * 0.5,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

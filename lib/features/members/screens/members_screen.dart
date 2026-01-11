@@ -470,14 +470,12 @@ class _MemberGridCard extends StatelessWidget {
                     children: [
                       _MiniActionButton(
                         icon: Icons.waving_hand,
-                        onTap: () {},
-                        tooltip: 'Say Hi',
+                        onTap: () => context.push('/chat/dm-$name'),
                       ),
                       const SizedBox(width: 8),
                       _MiniActionButton(
                         icon: Icons.person,
-                        onTap: () {},
-                        tooltip: 'View Profile',
+                        onTap: () => context.push(AppRoutes.members),
                       ),
                     ],
                   ),
@@ -495,32 +493,27 @@ class _MemberGridCard extends StatelessWidget {
 class _MiniActionButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final String tooltip;
 
   const _MiniActionButton({
     required this.icon,
     required this.onTap,
-    required this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 14,
-            color: AppColors.primary,
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 14,
+          color: AppColors.primary,
         ),
       ),
     );
@@ -665,12 +658,12 @@ class _MemberListCard extends StatelessWidget {
             children: [
               _ActionButton(
                 icon: Icons.waving_hand,
-                onTap: () {},
+                onTap: () => context.push('/chat/dm-$name'),
               ),
               const SizedBox(width: 8),
               _ActionButton(
                 icon: Icons.person_add,
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.members),
               ),
             ],
           ),

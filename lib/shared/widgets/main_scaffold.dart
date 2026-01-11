@@ -21,20 +21,51 @@ class MainScaffold extends StatelessWidget {
   }
   
   Widget _buildCreateButton(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        shape: BoxShape.circle,
-        boxShadow: AppShadows.glow,
-      ),
-      child: FloatingActionButton(
-        onPressed: () => context.push(AppRoutes.createEvent),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+    return _HoverScaleButton(
+      onTap: () => context.push(AppRoutes.createEvent),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          shape: BoxShape.circle,
+          boxShadow: AppShadows.glow,
+        ),
+        padding: const EdgeInsets.all(16),
         child: const Icon(
           Icons.add,
           color: Colors.white,
           size: 28,
+        ),
+      ),
+    );
+  }
+}
+
+class _HoverScaleButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _HoverScaleButton({required this.child, required this.onTap});
+
+  @override
+  State<_HoverScaleButton> createState() => _HoverScaleButtonState();
+}
+
+class _HoverScaleButtonState extends State<_HoverScaleButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.1 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: widget.child,
         ),
       ),
     );

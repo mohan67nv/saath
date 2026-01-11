@@ -70,19 +70,22 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Row(
           children: [
-            // Logo Image
+            // Logo Image - Round with proper clipping
             Container(
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: AppRadius.mdRadius,
+                shape: BoxShape.circle,
+                color: Colors.white,
                 boxShadow: AppShadows.sm,
               ),
-              child: const Icon(
-                Icons.people_alt_rounded,
-                color: Colors.white,
-                size: 26,
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -158,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 6),
                 const Text(
                   'Bangalore',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
                 const SizedBox(width: 8),
                 Container(
@@ -431,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const Spacer(),
             TextButton(
-              onPressed: () => context.go(AppRoutes.explore),
+              onPressed: () => context.go('${AppRoutes.explore}?view=grid'),
               child: const Text('See All'),
             ),
           ],
@@ -447,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: cat['icon'] as IconData,
                   name: cat['name'] as String,
                   color: cat['color'] as Color,
-                  onTap: () => context.push(AppRoutes.explore),
+                  onTap: () => context.go('${AppRoutes.explore}?view=grid'),
                 ),
               );
             }).toList(),
@@ -471,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const Spacer(),
             TextButton(
-              onPressed: () => context.go(AppRoutes.explore),
+              onPressed: () => context.go('${AppRoutes.explore}?view=joined'),
               child: const Text('View All'),
             ),
           ],
@@ -525,23 +528,131 @@ class _HomeScreenState extends State<HomeScreen> {
                 age: 26,
                 commonInterests: 3,
                 isVerified: true,
-                onTap: () {},
+                onTap: () => _showPersonProfile(context, 'Priya S.', 26, true, 3),
               ),
               _PersonCard(
                 name: 'Rahul K.',
                 age: 28,
                 commonInterests: 2,
                 isVerified: true,
-                onTap: () {},
+                onTap: () => _showPersonProfile(context, 'Rahul K.', 28, true, 2),
               ),
               _PersonCard(
                 name: 'Ananya M.',
                 age: 24,
                 commonInterests: 4,
                 isVerified: false,
-                onTap: () {},
+                onTap: () => _showPersonProfile(context, 'Ananya M.', 24, false, 4),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPersonProfile(BuildContext context, String name, int age, bool verified, int commonInterests) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 40),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$name, $age',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (verified) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.verified, color: AppColors.verified, size: 20),
+                ],
+              ],
+            ),
+            Text(
+              '$commonInterests common interests',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildProfileStat('Events', '8'),
+                _buildProfileStat('Rating', '4.6 ⭐'),
+                _buildProfileStat('Friends', '23'),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push('/chat/dm-$name');
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Say Hi'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.person_add),
+                    label: const Text('Connect'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
           ),
         ),
       ],

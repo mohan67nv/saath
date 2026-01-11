@@ -161,17 +161,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _buildSettingTile(
                 icon: Icons.help,
                 title: 'Help Center',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Help Center', 'Find answers to common questions about using Saath.\n\n• How to create events\n• Profile verification\n• Safety features\n• Payment & refunds\n\nFor more help, contact support@saath.app'),
               ),
               _buildSettingTile(
                 icon: Icons.message,
                 title: 'Contact Us',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Contact Us', 'Email: support@saath.app\nPhone: +91-1800-SAATH\n\nOur team is available 24/7 to assist you.'),
               ),
               _buildSettingTile(
                 icon: Icons.flag,
                 title: 'Report a Problem',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Report a Problem', 'Help us improve Saath by reporting bugs or issues.\n\nDescribe the problem and we\'ll investigate.\n\nEmail: bugs@saath.app'),
               ),
             ]),
             const SizedBox(height: AppSpacing.lg),
@@ -182,17 +182,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _buildSettingTile(
                 icon: Icons.description,
                 title: 'Terms of Service',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Terms of Service', 'By using Saath, you agree to our terms:\n\n1. Be respectful to other members\n2. Attend events you RSVP to\n3. No harassment or discrimination\n4. Protect your personal information\n5. Report any safety concerns\n\nFull terms at saath.app/terms'),
               ),
               _buildSettingTile(
                 icon: Icons.lock,
                 title: 'Privacy Policy',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Privacy Policy', 'Your privacy matters to us.\n\n• We collect only essential data\n• Your location is shared only during events\n• Aadhaar data is never stored\n• You can delete your account anytime\n\nFull policy at saath.app/privacy'),
               ),
               _buildSettingTile(
                 icon: Icons.insert_drive_file,
                 title: 'Community Guidelines',
-                onTap: () {},
+                onTap: () => _showContentSheet(context, 'Community Guidelines', 'Saath Community Standards:\n\n✓ Be authentic and genuine\n✓ Respect boundaries\n✓ Keep conversations appropriate\n✓ Report inappropriate behavior\n✓ Help create a safe space\n\nViolations may result in account suspension.'),
               ),
             ]),
             const SizedBox(height: AppSpacing.lg),
@@ -294,6 +294,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showContentSheet(BuildContext context, String title, String content) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              content,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+        ),
       ),
     );
   }

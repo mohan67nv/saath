@@ -282,7 +282,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.calendar_today,
                           title: 'My Events',
                           subtitle: '3 upcoming events',
-                          onTap: () {},
+                          onTap: () => context.push('/explore?view=grid'),
                         ),
                         const Divider(),
                         _buildActionTile(
@@ -290,7 +290,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.group,
                           title: 'Connections',
                           subtitle: '34 friends',
-                          onTap: () {},
+                          onTap: () => context.push(AppRoutes.members),
                         ),
                         const Divider(),
                         _buildActionTile(
@@ -298,7 +298,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.shield,
                           title: 'Safety Settings',
                           subtitle: 'Emergency contact, panic button',
-                          onTap: () {},
+                          onTap: () => context.push(AppRoutes.settings),
                         ),
                       ],
                     ),

@@ -6,16 +6,23 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/gradient_button.dart';
 
 /// Event Detail Screen
-class EventDetailScreen extends StatelessWidget {
+class EventDetailScreen extends StatefulWidget {
   final String eventId;
   
   const EventDetailScreen({super.key, required this.eventId});
 
   @override
+  State<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends State<EventDetailScreen> {
+  bool _isJoined = false;
+
+  @override
   Widget build(BuildContext context) {
     // Mock event data
     final event = {
-      'id': eventId,
+      'id': widget.eventId,
       'title': 'Sunday Morning Chai',
       'emoji': '☕',
       'category': 'Chai & Chat',
@@ -51,7 +58,7 @@ class EventDetailScreen extends StatelessWidget {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Colors.white),
@@ -63,7 +70,7 @@ class EventDetailScreen extends StatelessWidget {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.share, color: Colors.white),
@@ -74,7 +81,7 @@ class EventDetailScreen extends StatelessWidget {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.bookmark, color: Colors.white),
@@ -113,7 +120,7 @@ class EventDetailScreen extends StatelessWidget {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: AppColors.primary.withOpacity(0.1),
                           borderRadius: AppRadius.fullRadius,
                         ),
                         child: Text(
@@ -132,7 +139,7 @@ class EventDetailScreen extends StatelessWidget {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.1),
+                          color: AppColors.success.withOpacity(0.1),
                           borderRadius: AppRadius.fullRadius,
                         ),
                         child: Row(
@@ -253,38 +260,62 @@ class EventDetailScreen extends StatelessWidget {
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
           ],
         ),
         child: SafeArea(
-          child: GradientButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('You\'ve joined the event! 🎉'),
-                  backgroundColor: AppColors.success,
+          child: _isJoined
+            ? Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.success,
+                  borderRadius: AppRadius.lgRadius,
                 ),
-              );
-            },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person_add, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Join Event',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Joined ✓',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              )
+            : GradientButton(
+                onPressed: () {
+                  setState(() => _isJoined = true);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You\'ve joined the event! 🎉'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.person_add, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Join Event',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         ),
       ),
     );
@@ -357,7 +388,7 @@ class EventDetailScreen extends StatelessWidget {
             ),
           ),
           OutlinedButton(
-            onPressed: () {},
+            onPressed: () => _showHostProfile(context, host),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               minimumSize: const Size(0, 36),
@@ -366,6 +397,117 @@ class EventDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showHostProfile(BuildContext context, Map<String, dynamic> host) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Profile Header
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 40),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  host['name'] as String,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (host['verified'] as bool) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.verified, color: AppColors.verified, size: 20),
+                ],
+              ],
+            ),
+            Text(
+              '${host['age']} years old',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // Stats Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildProfileStat('Events Hosted', '12'),
+                _buildProfileStat('Rating', '4.8 ⭐'),
+                _buildProfileStat('Members Met', '45'),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push('/chat/dm-${host['name']}');
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Message'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.person_add),
+                    label: const Text('Connect'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileStat(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 
