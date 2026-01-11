@@ -732,7 +732,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: AppSpacing.md,
         mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 0.65, // Taller cards to fit grid of photos
+        childAspectRatio: 0.72, // Tighter fit to content
       ),
       itemCount: events.length,
       itemBuilder: (context, index) {

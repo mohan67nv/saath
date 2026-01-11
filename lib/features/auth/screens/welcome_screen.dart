@@ -117,42 +117,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildLogo() {
-  return Column(
-    children: [
-      // App Logo - Round with shadow
-      Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: AppShadows.glow,
+    return Column(
+      children: [
+        // App Logo - Display directly without background
+        Image.asset(
+          'assets/images/logo.png',
+          width: 100,
+          height: 100,
+          fit: BoxFit.contain,
         ),
-        child: ClipOval(
-          child: Image.asset(
-            'assets/images/logo.png',
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
+        const SizedBox(height: AppSpacing.md),
+        
+        // App Name
+        ShaderMask(
+          shaderCallback: (bounds) => AppColors.sunsetGradient.createShader(bounds),
+          child: Text(
+            'Saath',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      
-      // App Name
-      ShaderMask(
-        shaderCallback: (bounds) => AppColors.sunsetGradient.createShader(bounds),
-        child: Text(
-          'Saath',
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
   Widget _buildTagline() {
     return Column(
       children: [

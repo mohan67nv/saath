@@ -70,23 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Row(
           children: [
-            // Logo Image - Round with proper clipping
-            Container(
+            // Logo Image - Direct display without background
+            Image.asset(
+              'assets/images/logo.png',
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: AppShadows.sm,
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              fit: BoxFit.contain,
             ),
             const SizedBox(width: AppSpacing.sm),
             // App Name & Tagline
