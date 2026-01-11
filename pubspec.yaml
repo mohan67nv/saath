@@ -1,0 +1,61 @@
+name: adda
+description: "Saath - Group-first social discovery app for India"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI Components
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10
+  cached_network_image: ^3.4.1
+  flutter_animate: ^4.5.2
+  shimmer: ^3.0.0
+  
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  
+  # Navigation
+  go_router: ^14.8.1
+  
+  # Backend & Auth
+  supabase_flutter: ^2.10.1
+  
+  # Forms & Validation - removed flutter_form_builder due to intl conflict
+  # Validation will be done manually
+  
+  # Image & Media
+  image_picker: ^1.1.2
+  
+  # Location & Maps
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  
+  # Utilities
+  intl: any
+  uuid: ^4.5.1
+  shared_preferences: ^2.5.2
+  url_launcher: ^6.3.1
+  permission_handler: ^11.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  riverpod_generator: ^2.6.3
+  build_runner: ^2.4.15
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
