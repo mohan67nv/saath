@@ -35,6 +35,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         final phone = '+91${_phoneController.text.trim()}';
         
         // Send OTP using 2Factor
+        // Defaulting to AUTOGEN. If you have a specific DLT template, pass it here: template: 'YOUR_TEMPLATE_ID'
         final result = await _smsService.sendOTP(phone);
         
         if (result['success']) {

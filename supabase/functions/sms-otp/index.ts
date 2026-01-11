@@ -13,20 +13,29 @@ serve(async (req) => {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             },
         });
     }
 
     try {
-        const { action, phoneNumber, sessionId, otp } = await req.json();
+
+        const { action, phoneNumber, sessionId, otp, template } = await req.json();
 
         let twoFactorUrl: string;
 
         if (action === 'send') {
             // Send OTP
-            const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
-            twoFactorUrl = `${TWOFACTOR_BASE_URL}/${TWOFACTOR_API_KEY}/SMS/${cleanPhone}/AUTOGEN`;
+            // Remove all non-digit characters
+            const numericPhone = phoneNumber.replace(/\D/g, '');
+            // For India, we want the last 10 digits. 
+            // If it starts with 91 and is 12 digits, take last 10.
+            // If it is 10 digits, allow it.
+            const cleanPhone = numericPhone.length > 10 ? numericPhone.slice(-10) : numericPhone;
+
+            // Allow custom template for DLT (e.g., "OTP1")
+            const templateSuffix = template ? `/${template}` : '';
+            twoFactorUrl = `${TWOFACTOR_BASE_URL}/${TWOFACTOR_API_KEY}/SMS/${cleanPhone}/AUTOGEN${templateSuffix}`;
         } else if (action === 'verify') {
             // Verify OTP
             twoFactorUrl = `${TWOFACTOR_BASE_URL}/${TWOFACTOR_API_KEY}/SMS/VERIFY/${sessionId}/${otp}`;
@@ -56,7 +65,7 @@ serve(async (req) => {
         );
     } catch (error) {
         return new Response(
-            JSON.stringify({ success: false, message: error.message }),
+            JSON.stringify({ success: false, message: (error as Error).message || String(error) }),
             {
                 status: 500,
                 headers: {

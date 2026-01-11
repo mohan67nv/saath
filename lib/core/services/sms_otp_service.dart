@@ -8,7 +8,7 @@ class SmsOtpService {
       '${SupabaseConfig.supabaseUrl}/functions/v1/sms-otp';
 
   /// Send OTP to phone number
-  Future<Map<String, dynamic>> sendOTP(String phoneNumber) async {
+  Future<Map<String, dynamic>> sendOTP(String phoneNumber, {String? template}) async {
     try {
       final response = await http.post(
         Uri.parse(_edgeFunctionUrl),
@@ -19,6 +19,7 @@ class SmsOtpService {
         body: json.encode({
           'action': 'send',
           'phoneNumber': phoneNumber,
+          'template': template,
         }),
       );
 
